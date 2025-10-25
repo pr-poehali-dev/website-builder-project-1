@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,22 +6,46 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
 interface Project {
-  id: string;
+  id: number;
   name: string;
-  preview: string;
+  preview_url: string;
   published: boolean;
-  publishedUrl?: string;
+  published_url?: string;
+  file_name?: string;
+  file_size?: number;
+  created_at?: string;
 }
+
+const API_URL = 'https://functions.poehali.dev/c88acdd1-5acd-43fd-b8c9-f7b56f1cf000';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([
-    { id: '1', name: 'Мой сайт-портфолио', preview: '/placeholder.svg', published: true, publishedUrl: 'https://mysite.dev' },
-    { id: '2', name: 'Корпоративный сайт', preview: '/placeholder.svg', published: false },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setProjects(data);
+    } catch (error) {
+      toast({
+        title: '❌ Ошибка',
+        description: 'Не удалось загрузить проекты',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,14 +58,82 @@ const Index = () => {
     }
   };
 
-  const handlePublish = (id: string) => {
-    setProjects(projects.map(p => 
-      p.id === id ? { ...p, published: true, publishedUrl: `https://${p.name.toLowerCase().replace(/\s+/g, '-')}.dev` } : p
-    ));
-    toast({
-      title: '🚀 Сайт опубликован!',
-      description: 'Ваш сайт доступен в интернете',
-    });
+  const createProject = async () => {
+    if (!uploadedFile) return;
+
+    try {
+      setLoading(true);
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        const fileContent = e.target?.result as string;
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: uploadedFile.name.replace(/\.[^/.]+$/, ""),
+            preview_url: '/placeholder.svg',
+            file_content: fileContent,
+            file_name: uploadedFile.name,
+            file_size: uploadedFile.size
+          })
+        });
+        
+        const newProject = await response.json();
+        setProjects([newProject, ...projects]);
+        setUploadedFile(null);
+        setActiveTab('projects');
+        
+        toast({
+          title: '✅ Проект создан',
+          description: 'Готов к публикации',
+        });
+      };
+      
+      reader.readAsText(uploadedFile);
+    } catch (error) {
+      toast({
+        title: '❌ Ошибка',
+        description: 'Не удалось создать проект',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePublish = async (id: number) => {
+    try {
+      setLoading(true);
+      const project = projects.find(p => p.id === id);
+      const publishedUrl = `https://${project?.name.toLowerCase().replace(/\s+/g, '-')}.dev`;
+      
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          published: true,
+          published_url: publishedUrl
+        })
+      });
+      
+      const updatedProject = await response.json();
+      setProjects(projects.map(p => p.id === id ? updatedProject : p));
+      
+      toast({
+        title: '🚀 Сайт опубликован!',
+        description: 'Ваш сайт доступен в интернете',
+      });
+    } catch (error) {
+      toast({
+        title: '❌ Ошибка',
+        description: 'Не удалось опубликовать проект',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -212,23 +304,11 @@ const Index = () => {
                   <Button 
                     size="sm"
                     className="bg-gradient-to-r from-primary to-secondary w-full sm:w-auto"
-                    onClick={() => {
-                      const newProject: Project = {
-                        id: Date.now().toString(),
-                        name: uploadedFile.name.replace(/\.[^/.]+$/, ""),
-                        preview: '/placeholder.svg',
-                        published: false
-                      };
-                      setProjects([...projects, newProject]);
-                      setActiveTab('projects');
-                      toast({
-                        title: '✅ Проект создан',
-                        description: 'Готов к публикации',
-                      });
-                    }}
+                    onClick={createProject}
+                    disabled={loading}
                   >
                     <Icon name="Check" size={16} className="mr-2" />
-                    Создать проект
+                    {loading ? 'Создание...' : 'Создать проект'}
                   </Button>
                 </div>
               )}
@@ -279,7 +359,7 @@ const Index = () => {
                 >
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     <img 
-                      src={project.preview} 
+                      src={project.preview_url} 
                       alt={project.name}
                       className="w-full h-full object-cover"
                     />
@@ -294,16 +374,16 @@ const Index = () => {
                   <div className="p-4">
                     <h3 className="font-semibold text-lg mb-2">{project.name}</h3>
                     
-                    {project.published && project.publishedUrl ? (
+                    {project.published && project.published_url ? (
                       <div className="space-y-2">
                         <a 
-                          href={project.publishedUrl}
+                          href={project.published_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm text-primary hover:underline"
+                          className="flex items-center gap-2 text-sm text-primary hover:underline break-all"
                         >
-                          <Icon name="ExternalLink" size={16} />
-                          {project.publishedUrl}
+                          <Icon name="ExternalLink" size={16} className="flex-shrink-0" />
+                          <span className="truncate">{project.published_url}</span>
                         </a>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" className="flex-1 glass text-xs sm:text-sm">
@@ -319,9 +399,10 @@ const Index = () => {
                       <Button 
                         className="w-full bg-gradient-to-r from-primary to-secondary glow"
                         onClick={() => handlePublish(project.id)}
+                        disabled={loading}
                       >
                         <Icon name="Rocket" size={16} className="mr-2" />
-                        Опубликовать
+                        {loading ? 'Публикация...' : 'Опубликовать'}
                       </Button>
                     )}
                   </div>
@@ -329,7 +410,7 @@ const Index = () => {
               ))}
             </div>
 
-            {projects.length === 0 && (
+            {projects.length === 0 && !loading && (
               <Card className="glass p-12 text-center">
                 <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                   <Icon name="FolderOpen" size={40} className="text-muted-foreground" />

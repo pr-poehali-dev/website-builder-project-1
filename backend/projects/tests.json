@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Get all projects",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create new project",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Project",
+        "file_name": "index.html",
+        "file_size": 1024
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "name": "Test Project",
+        "published": false
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
