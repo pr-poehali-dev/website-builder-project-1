@@ -16,6 +16,7 @@ interface Project {
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
     { id: '1', name: 'Мой сайт-портфолио', preview: '/placeholder.svg', published: true, publishedUrl: 'https://mysite.dev' },
     { id: '2', name: 'Корпоративный сайт', preview: '/placeholder.svg', published: false },
@@ -48,15 +49,22 @@ const Index = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/20 pointer-events-none" />
       
       <nav className="relative z-10 glass border-b border-white/10">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center glow">
-              <Icon name="Rocket" size={24} className="text-white" />
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center glow">
+              <Icon name="Rocket" size={20} className="text-white sm:w-6 sm:h-6" />
             </div>
-            <h1 className="text-2xl font-bold gradient-text">WebBuilder Pro</h1>
+            <h1 className="text-lg sm:text-2xl font-bold gradient-text">WebBuilder Pro</h1>
           </div>
           
-          <div className="flex gap-6">
+          <button 
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Icon name={mobileMenuOpen ? "X" : "Menu"} size={24} />
+          </button>
+
+          <div className="hidden md:flex gap-6">
             <button 
               onClick={() => setActiveTab('home')}
               className={`transition-colors ${activeTab === 'home' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
@@ -77,36 +85,61 @@ const Index = () => {
             </button>
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden glass border-t border-white/10 animate-fade-in">
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+              <button 
+                onClick={() => { setActiveTab('home'); setMobileMenuOpen(false); }}
+                className={`text-left py-2 px-4 rounded-lg transition-colors ${activeTab === 'home' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-white/5'}`}
+              >
+                Главная
+              </button>
+              <button 
+                onClick={() => { setActiveTab('builder'); setMobileMenuOpen(false); }}
+                className={`text-left py-2 px-4 rounded-lg transition-colors ${activeTab === 'builder' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-white/5'}`}
+              >
+                Конструктор
+              </button>
+              <button 
+                onClick={() => { setActiveTab('projects'); setMobileMenuOpen(false); }}
+                className={`text-left py-2 px-4 rounded-lg transition-colors ${activeTab === 'projects' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-white/5'}`}
+              >
+                Мои проекты
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
-      <main className="relative z-10 container mx-auto px-6 py-12">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {activeTab === 'home' && (
           <div className="animate-fade-in">
-            <div className="max-w-4xl mx-auto text-center mb-16">
-              <h2 className="text-6xl font-bold mb-6 gradient-text animate-scale-in">
+            <div className="max-w-4xl mx-auto text-center mb-12 sm:mb-16">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 gradient-text animate-scale-in">
                 Создавай сайты за минуты
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
                 Загрузи файлы своего сайта и опубликуй его в интернете одним кликом. 
                 Без сложных настроек и технических знаний.
               </p>
-              <div className="flex gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity glow"
+                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity glow w-full sm:w-auto"
                   onClick={() => setActiveTab('builder')}
                 >
                   <Icon name="Sparkles" size={20} className="mr-2" />
                   Начать создавать
                 </Button>
-                <Button size="lg" variant="outline" className="glass border-white/20 hover:bg-white/10">
+                <Button size="lg" variant="outline" className="glass border-white/20 hover:bg-white/10 w-full sm:w-auto">
                   <Icon name="Play" size={20} className="mr-2" />
                   Посмотреть демо
                 </Button>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
               <Card className="glass p-6 hover:scale-105 transition-transform animate-fade-in">
                 <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
                   <Icon name="Upload" size={24} className="text-primary" />
@@ -142,10 +175,10 @@ const Index = () => {
 
         {activeTab === 'builder' && (
           <div className="max-w-4xl mx-auto animate-fade-in">
-            <h2 className="text-4xl font-bold mb-8 gradient-text">Конструктор сайтов</h2>
+            <h2 className="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8 gradient-text">Конструктор сайтов</h2>
             
-            <Card className="glass p-8 mb-6">
-              <div className="border-2 border-dashed border-white/20 rounded-lg p-12 text-center hover:border-primary/50 transition-colors">
+            <Card className="glass p-4 sm:p-8 mb-6">
+              <div className="border-2 border-dashed border-white/20 rounded-lg p-6 sm:p-12 text-center hover:border-primary/50 transition-colors">
                 <input
                   type="file"
                   id="file-upload"
@@ -154,11 +187,11 @@ const Index = () => {
                   onChange={handleFileUpload}
                 />
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
-                    <Icon name="CloudUpload" size={40} className="text-primary" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-float">
+                    <Icon name="CloudUpload" size={32} className="text-primary sm:w-10 sm:h-10" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-2">Загрузи файлы сайта</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <h3 className="text-lg sm:text-2xl font-semibold mb-2">Загрузи файлы сайта</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">
                     Поддерживаются HTML, CSS, JS и ZIP архивы
                   </p>
                   <Button className="bg-gradient-to-r from-primary to-secondary glow">
@@ -168,7 +201,7 @@ const Index = () => {
               </div>
 
               {uploadedFile && (
-                <div className="mt-6 p-4 glass rounded-lg flex items-center justify-between animate-scale-in">
+                <div className="mt-6 p-4 glass rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between animate-scale-in">
                   <div className="flex items-center gap-3">
                     <Icon name="File" size={24} className="text-primary" />
                     <div>
@@ -178,7 +211,7 @@ const Index = () => {
                   </div>
                   <Button 
                     size="sm"
-                    className="bg-gradient-to-r from-primary to-secondary"
+                    className="bg-gradient-to-r from-primary to-secondary w-full sm:w-auto"
                     onClick={() => {
                       const newProject: Project = {
                         id: Date.now().toString(),
@@ -226,10 +259,10 @@ const Index = () => {
 
         {activeTab === 'projects' && (
           <div className="animate-fade-in">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-4xl font-bold gradient-text">Мои проекты</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-4xl font-bold gradient-text">Мои проекты</h2>
               <Button 
-                className="bg-gradient-to-r from-primary to-secondary glow"
+                className="bg-gradient-to-r from-primary to-secondary glow w-full sm:w-auto"
                 onClick={() => setActiveTab('builder')}
               >
                 <Icon name="Plus" size={20} className="mr-2" />
@@ -237,7 +270,7 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {projects.map((project, index) => (
                 <Card 
                   key={project.id} 
@@ -273,12 +306,12 @@ const Index = () => {
                           {project.publishedUrl}
                         </a>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1 glass">
-                            <Icon name="Settings" size={16} className="mr-2" />
-                            Настройки
+                          <Button size="sm" variant="outline" className="flex-1 glass text-xs sm:text-sm">
+                            <Icon name="Settings" size={14} className="mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Настройки</span>
                           </Button>
                           <Button size="sm" variant="outline" className="glass">
-                            <Icon name="Share2" size={16} />
+                            <Icon name="Share2" size={14} />
                           </Button>
                         </div>
                       </div>
